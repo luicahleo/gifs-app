@@ -1,11 +1,28 @@
-import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { GifsService } from '../../services/gifs.service';
+import {
+  Component,
+  ElementRef,
+  ViewChild,
+} from '@angular/core';
 
 @Component({
-    selector: 'gifs-search-box',
-    template: `<h5>Buscar:
-    <input type="text" class="form-control" placeholder="Buscar GIFs...">
-    </h5>`,
-
+  selector: 'gifs-search-box',
+  templateUrl: './search-box.component.html',
 })
-export class SearchBoxComponent { }
+export class SearchBoxComponent {
+  @ViewChild('txtTagInput')
+  public tagInput!: ElementRef<HTMLInputElement>;
+
+  constructor(private gifsService: GifsService) {}
+
+  searchTag(): void {
+    const newTag = this.tagInput.nativeElement.value;
+    this.gifsService.searchTag(newTag);
+
+    this.tagInput.nativeElement.value = '';
+
+    console.log({ newTag });
+  }
+}
+
+
