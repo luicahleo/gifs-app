@@ -1,15 +1,21 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Gif, SearchResponse } from '../interfaces/gifs.interfaces';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GifsService {
+  public gifList: Gif[] = [];
+
   private _tagsHistory: string[] = [];
   private apiKey: string = 'pnTgNxxHtcLrQTQA0pZ2FXx6DD8MMjHb';
   private serviceUrl: string = 'https://api.giphy.com/v1/gifs';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    this.loadLocalStorage();
+    this.loadFirstGift();
+  }
 
   get tagsHistory(): string[] {
     return [...this._tagsHistory];
@@ -25,10 +31,35 @@ export class GifsService {
     this._tagsHistory.unshift(tag);
 
     this._tagsHistory = this._tagsHistory.splice(0, 10);
+    this.saveLocalStorage();
   }
 
-  async searchTag(tag: string): Promise<void> {
-    if (tag.trim().length === 0) return;
+  private saveLocalStorage(): void {
+    localStorage.setItem('history', JSON.stringify(this._tagsHistory));
+  }
+
+  private loadLocalStorage(): void {
+    if (!localStorage.getItem('history')) return;
+
+    this._tagsHistory = JSON.parse(localStorage.getItem('history')!);
+
+
+  }
+
+  private loadFirstGift(): void{
+
+    if(this._tagsHistory.length === 0) return;
+
+    const firstGif: string = this.tagsHistory[0];
+    this.searchTag(firstGif);
+
+    console.log(firstGif);
+
+
+  }
+
+  searchTag(tag: string): void {
+    if (tag.length === 0) return;
     this.organizeTag(tag);
 
     const params = new HttpParams()
@@ -37,15 +68,11 @@ export class GifsService {
       .set('limit', '5');
 
     this.http
-      .get(`${this.serviceUrl}/search?`, { params })
+      .get<SearchResponse>(`${this.serviceUrl}/search?`, { params })
       .subscribe((response) => {
-        console.log(response);
-      });
+        this.gifList = response.data;
 
-    // fetch(
-    //   'https://api.giphy.com/v1/gifs/search?api_key=pnTgNxxHtcLrQTQA0pZ2FXx6DD8MMjHb&q=goku&limit=5'
-    // )
-    //   .then((response) => response.json())
-    //   .then((data) => console.log(data));
+        console.log({ gifs: this.gifList });
+      });
   }
 }
